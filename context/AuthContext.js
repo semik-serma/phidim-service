@@ -8,13 +8,13 @@ const AuthContext = createContext({
   role: null,
   isAuthenticated: false,
   isLoading: true,
-  login: async () => {},
-  loginWithGoogle: async () => {},
-  logout: async () => {},
-  register: async () => {},
-  refreshSession: async () => {},
+  login: async () => { },
+  loginWithGoogle: async () => { },
+  logout: async () => { },
+  register: async () => { },
+  refreshSession: async () => { },
   hasRole: () => false,
-  updateUser: async () => {},
+  updateUser: async () => { },
 });
 
 export const DEMO_ACCOUNTS = {
@@ -77,7 +77,7 @@ export function AuthProvider({ children }) {
           if (rawVal.startsWith("j:")) rawVal = rawVal.slice(2);
           return normalizeUser(JSON.parse(rawVal));
         }
-      } catch (e) {}
+      } catch (e) { }
     }
     return null;
   });
@@ -88,12 +88,32 @@ export function AuthProvider({ children }) {
         if (localStorage.getItem(SESSION_KEY) || document.cookie.includes("phidim_auth_user=")) {
           return false;
         }
-      } catch (e) {}
+      } catch (e) { }
     }
     return true;
   });
 
   const refreshTimer = useRef(null);
+
+  const safeSetUser = useCallback((acc) => {
+    const normalized = normalizeUser(acc);
+    setUser(normalized);
+    try {
+      if (typeof window !== "undefined" && normalized) {
+        localStorage.setItem(SESSION_KEY, JSON.stringify(normalized));
+        const cookieVal = encodeURIComponent(JSON.stringify(normalized));
+        document.cookie = `phidim_auth_user=${cookieVal}; path=/; max-age=2592000; SameSite=Lax`;
+      } else if (typeof window !== "undefined") {
+        localStorage.removeItem(SESSION_KEY);
+        document.cookie = "phidim_auth_user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax";
+        document.cookie = "phidim_jwt_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax";
+        document.cookie = "phidim_access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax";
+        document.cookie = "phidim_refresh_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax";
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, []);
 
   const refreshSession = useCallback(async () => {
     try {
@@ -111,10 +131,10 @@ export function AuthProvider({ children }) {
         setUser(norm);
         try {
           localStorage.setItem(SESSION_KEY, JSON.stringify(norm));
-        } catch (e) {}
+        } catch (e) { }
         return norm;
       }
-    } catch (e) {}
+    } catch (e) { }
     return null;
   }, []);
 
@@ -150,7 +170,7 @@ export function AuthProvider({ children }) {
                 setIsLoading(false);
                 return;
               }
-            } catch (e) {}
+            } catch (e) { }
           }
 
           const cookieMatch = document.cookie.match(/phidim_auth_user=([^;]+)/);
@@ -159,7 +179,7 @@ export function AuthProvider({ children }) {
               let rawVal = cookieMatch[1];
               try {
                 rawVal = decodeURIComponent(rawVal);
-              } catch (e) {}
+              } catch (e) { }
               if (typeof rawVal === "string" && rawVal.startsWith("j:")) {
                 rawVal = rawVal.slice(2);
               }
@@ -171,7 +191,7 @@ export function AuthProvider({ children }) {
                 setIsLoading(false);
                 return;
               }
-            } catch (e) {}
+            } catch (e) { }
           }
 
           const savedUser = localStorage.getItem(SESSION_KEY);
@@ -192,7 +212,7 @@ export function AuthProvider({ children }) {
                     return;
                   }
                 }
-              } catch (e) {}
+              } catch (e) { }
               setUser(normalizeUser(parsed));
             }
           }
@@ -213,7 +233,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     if (!user) return;
     refreshTimer.current = setInterval(() => {
-      refreshSession().catch(() => {});
+      refreshSession().catch(() => { });
     }, 12 * 60 * 1000);
     return () => {
       if (refreshTimer.current) clearInterval(refreshTimer.current);
@@ -226,27 +246,8 @@ export function AuthProvider({ children }) {
     console.log("👤 Registered realtime user:", user.id);
   }, [user]);
 
-  const safeSetUser = useCallback((acc) => {
-    const normalized = normalizeUser(acc);
-    setUser(normalized);
-    try {
-      if (typeof window !== "undefined" && normalized) {
-        localStorage.setItem(SESSION_KEY, JSON.stringify(normalized));
-        const cookieVal = encodeURIComponent(JSON.stringify(normalized));
-        document.cookie = `phidim_auth_user=${cookieVal}; path=/; max-age=2592000; SameSite=Lax`;
-      } else if (typeof window !== "undefined") {
-        localStorage.removeItem(SESSION_KEY);
-        document.cookie = "phidim_auth_user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax";
-        document.cookie = "phidim_jwt_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax";
-        document.cookie = "phidim_access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax";
-        document.cookie = "phidim_refresh_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax";
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  }, []);
-
   const loginWithGoogle = useCallback(async (targetRole = "USER") => {
+
     setIsLoading(true);
     try {
       if (typeof window !== "undefined") {
@@ -288,9 +289,9 @@ export function AuthProvider({ children }) {
         const activeRole = role || data.user?.role || "USER";
         const account = data.user
           ? {
-              ...data.user,
-              role: activeRole,
-            }
+            ...data.user,
+            role: activeRole,
+          }
           : DEMO_ACCOUNTS[activeRole] || DEMO_ACCOUNTS.USER;
         safeSetUser(account);
         setIsLoading(false);
@@ -339,7 +340,7 @@ export function AuthProvider({ children }) {
   const logout = useCallback(async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
-    } catch (e) {}
+    } catch (e) { }
     safeSetUser(null);
     if (typeof window !== "undefined") {
       window.location.href = "/login";
@@ -359,7 +360,7 @@ export function AuthProvider({ children }) {
           localStorage.setItem(SESSION_KEY, JSON.stringify(next));
           const cookieVal = encodeURIComponent(JSON.stringify(next));
           document.cookie = `phidim_auth_user=${cookieVal}; path=/; max-age=2592000; SameSite=Lax`;
-        } catch (e) {}
+        } catch (e) { }
       }
       return next;
     });
@@ -411,13 +412,13 @@ export function useAuth() {
       role: null,
       isAuthenticated: false,
       isLoading: false,
-      login: async () => {},
-      loginWithGoogle: async () => {},
-      logout: () => {},
-      register: async () => {},
-      refreshSession: async () => {},
+      login: async () => { },
+      loginWithGoogle: async () => { },
+      logout: () => { },
+      register: async () => { },
+      refreshSession: async () => { },
       hasRole: () => false,
-      updateUser: () => {},
+      updateUser: () => { },
     };
   }
   return context;

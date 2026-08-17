@@ -384,7 +384,21 @@ export default function Home() {
       />
 
       {/* Authoritative Semantic Crawl Container for Top Search Engine Ranking */}
-      <div className="sr-only" aria-hidden="true">
+      <div
+        className="sr-only"
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          width: "1px",
+          height: "1px",
+          padding: 0,
+          margin: "-1px",
+          overflow: "hidden",
+          clip: "rect(0, 0, 0, 0)",
+          whiteSpace: "nowrap",
+          borderWidth: 0,
+        }}
+      >
         <header>
           <h1>Phidim Service | No. 1 Local Services & Home Technicians in Phidim, Panchthar, Nepal</h1>
           <p>
