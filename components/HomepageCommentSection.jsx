@@ -303,7 +303,7 @@ export function HomepageCommentSection() {
         sessionStorage.setItem("phidim_pending_comment_draft", newCommentText.trim());
       } catch (e) { }
     }
-    triggerToast("Please log in to post your comment...");
+    triggerToast("Please log in to interact with comments...");
     setTimeout(() => {
       window.location.href = "/login?redirect=/?action=comment";
     }, 400);
@@ -423,6 +423,11 @@ export function HomepageCommentSection() {
   };
 
   const handleReaction = (id, type) => {
+    if (!isAuthenticated || !user) {
+      setShowLoginPrompt(true);
+      return;
+    }
+
     const currentReaction = reactions[id];
     let nextReaction = null;
     let likeDelta = 0;
@@ -476,6 +481,11 @@ export function HomepageCommentSection() {
   };
 
   const handleShare = (item) => {
+    if (!isAuthenticated || !user) {
+      setShowLoginPrompt(true);
+      return;
+    }
+
     const activeText = getCommentText(item, activeLang);
     const shareText = `"${activeText}" — ${item.author.name} on Phidim Service (https://phidimservice.com.np)`;
     if (navigator.clipboard) {
@@ -535,10 +545,10 @@ export function HomepageCommentSection() {
 
             <div className="space-y-1.5">
               <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-                Log In to Comment or Reply
+                Log In to Participate
               </h3>
               <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
-                To keep our community discussion verified, please log in with your account to post comments or reply to others.
+                Please log in to like, dislike, comment, reply, or share in this discussion. Guests can view comments freely!
               </p>
             </div>
 
