@@ -494,10 +494,6 @@ export function HomepageCommentSection() {
     setVisibleCount(1);
   };
 
-  const triggerToast = (msg) => {
-    setShowToast(msg);
-    setTimeout(() => setShowToast(""), 3000);
-  };
 
   // Only Nepali and English
   const languageOptions = [
