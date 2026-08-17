@@ -1,0 +1,6 @@
+{
+  "name": "Phidim Service",
+  "description": "Service platform for Phidim Service featuring technical doorstep services, security systems, fiber net, LAN networking, and local technical assistance in Nepal.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
