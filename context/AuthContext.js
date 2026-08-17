@@ -131,6 +131,28 @@ export function AuthProvider({ children }) {
         }
 
         if (typeof window !== "undefined") {
+          const params = new URLSearchParams(window.location.search);
+          const authToken = params.get("auth_token");
+          const userParam = params.get("user");
+          if (authToken && userParam) {
+            try {
+              let parsedUser = JSON.parse(decodeURIComponent(userParam));
+              if (parsedUser) {
+                const norm = normalizeUser(parsedUser);
+                safeSetUser(norm);
+                document.cookie = `phidim_access_token=${authToken}; path=/; max-age=86400; SameSite=Lax`;
+                document.cookie = `phidim_auth_user=${encodeURIComponent(JSON.stringify(norm))}; path=/; max-age=2592000; SameSite=Lax`;
+                localStorage.setItem(SESSION_KEY, JSON.stringify(norm));
+                params.delete("auth_token");
+                params.delete("user");
+                const newQuery = params.toString() ? `?${params.toString()}` : "";
+                window.history.replaceState({}, "", `${window.location.pathname}${newQuery}`);
+                setIsLoading(false);
+                return;
+              }
+            } catch (e) {}
+          }
+
           const cookieMatch = document.cookie.match(/phidim_auth_user=([^;]+)/);
           if (cookieMatch) {
             try {
@@ -186,7 +208,7 @@ export function AuthProvider({ children }) {
     return () => {
       active = false;
     };
-  }, [refreshSession]);
+  }, [refreshSession, safeSetUser]);
 
   useEffect(() => {
     if (!user) return;
@@ -228,7 +250,8 @@ export function AuthProvider({ children }) {
     setIsLoading(true);
     try {
       if (typeof window !== "undefined") {
-        window.location.href = `/api/auth/google?role=${targetRole}`;
+        const origin = window.location.origin;
+        window.location.href = `/api/auth/google?role=${targetRole}&origin=${encodeURIComponent(origin)}`;
       }
     } catch (err) {
       console.error("Google login redirect error:", err);
