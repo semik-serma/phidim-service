@@ -247,12 +247,28 @@ export function AuthProvider({ children }) {
   }, [user]);
 
   const loginWithGoogle = useCallback(async (targetRole = "USER") => {
-
     setIsLoading(true);
     try {
       if (typeof window !== "undefined") {
         const origin = window.location.origin;
-        window.location.href = `/api/auth/google?role=${targetRole}&origin=${encodeURIComponent(origin)}`;
+        const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "215712539422-43m80t4b9943vo3s8nhqnqr9b7foh76g.apps.googleusercontent.com";
+        const redirectUri = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+          ? "http://localhost:3000/api/auth/google/callback"
+          : "https://phidim.phidimservice.com.np/api/auth/google/callback";
+
+        const nonce = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+        const statePayload = { role: targetRole, redirectUri, nonce, origin };
+        const state = btoa(JSON.stringify(statePayload));
+
+        const googleAuthUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
+        googleAuthUrl.searchParams.append("client_id", clientId);
+        googleAuthUrl.searchParams.append("redirect_uri", redirectUri);
+        googleAuthUrl.searchParams.append("response_type", "code");
+        googleAuthUrl.searchParams.append("scope", "openid email profile");
+        googleAuthUrl.searchParams.append("prompt", "select_account");
+        googleAuthUrl.searchParams.append("state", state);
+
+        window.location.href = googleAuthUrl.toString();
       }
     } catch (err) {
       console.error("Google login redirect error:", err);
@@ -260,6 +276,7 @@ export function AuthProvider({ children }) {
       throw err;
     }
   }, []);
+
 
   const login = useCallback(
     async ({ emailOrPhone, password, rememberMe = false, role = "USER" }) => {
