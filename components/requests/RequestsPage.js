@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { SERVICE_REQUEST_STATUSES } from "@/lib/requests";
 import { useCall } from "@/components/calls/CallProvider";
@@ -8,17 +8,20 @@ import { PhoneCall } from "lucide-react";
 
 /**
  * Client rendering for the /requests page. All data comes from the
- * server component (already role-scoped). Mutations talk to protected
- * APIs that re-assert the session + role server-side, so a crafted
- * client can never read or write someone else's requests.
+ * role-scoped API endpoints.
  */
-export default function RequestsPage({ requests, userRole }) {
+export default function RequestsPage({ requests = [], userRole }) {
   const router = useRouter();
   const { startCall } = useCall();
   const [items, setItems] = useState(requests);
   const [form, setForm] = useState({ title: "", category: "", description: "", phone: "" });
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    refresh();
+  }, []);
+
 
   const canCreate = userRole === "USER" || userRole === "ADMIN";
   const canUpdateStatus = userRole === "TECHNICIAN" || userRole === "ADMIN";
