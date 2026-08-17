@@ -1,7 +1,7 @@
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL ||
-  "https://phidim.phidimservice.com.np" ||
-  "http://127.0.0.1:5000";
+  "https://phidim.phidimservice.com.np";
+
 
 const nextConfig = {
   reactStrictMode: true,
