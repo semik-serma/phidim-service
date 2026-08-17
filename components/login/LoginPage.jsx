@@ -80,12 +80,27 @@ function GoogleIcon({ className }) {
 }
 
 export default function LoginPage() {
-  const { login, register, loginWithGoogle } = useAuth();
+  const { user, isAuthenticated, login, register, loginWithGoogle } = useAuth();
   const router = useRouter();
 
   const [role, setRole] = useState('USER'); // 'USER' | 'TECHNICIAN' | 'ADMIN'
   const [techMode, setTechMode] = useState('LOGIN'); // 'LOGIN' | 'REGISTER'
   const [showAdminMenu, setShowAdminMenu] = useState(false);
+
+  // If already authenticated, redirect immediately to their dashboard
+  useEffect(() => {
+    if (isAuthenticated && user?.role) {
+      const target =
+        user.role === 'ADMIN'
+          ? '/admin/dashboard'
+          : user.role === 'TECHNICIAN'
+          ? '/technician/dashboard'
+          : '/user/dashboard';
+      if (typeof window !== 'undefined') {
+        window.location.href = target;
+      }
+    }
+  }, [isAuthenticated, user]);
 
   // Standard Customer fields
   const [email, setEmail] = useState('');
@@ -206,15 +221,14 @@ export default function LoginPage() {
         rememberMe,
         role: 'USER',
       });
-      const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-      const redirectParam = urlParams?.get('redirect');
-      const targetDashboard = redirectParam || account.dashboardPath || (
-        account.role === 'ADMIN'
+      
+      const targetDashboard =
+        account?.role === 'ADMIN'
           ? '/admin/dashboard'
-          : account.role === 'TECHNICIAN'
+          : account?.role === 'TECHNICIAN'
           ? '/technician/dashboard'
-          : '/user/dashboard'
-      );
+          : '/user/dashboard';
+
       if (typeof window !== 'undefined') {
         window.location.href = targetDashboard;
       }
@@ -256,7 +270,7 @@ export default function LoginPage() {
         });
       }
 
-      toast.success(`Welcome Technician ${account.name}! Launching Technician Command Dashboard...`);
+      toast.success(`Welcome Technician ${account.name}! Redirecting to Technician Dashboard...`);
       if (typeof window !== 'undefined') {
         window.location.href = '/technician/dashboard';
       }
@@ -283,7 +297,7 @@ export default function LoginPage() {
       });
       toast.success(`Welcome System Admin ${account.name}! Redirecting to Admin Dashboard...`);
       if (typeof window !== 'undefined') {
-        window.location.href = account.dashboardPath || '/admin/dashboard';
+        window.location.href = '/admin/dashboard';
       }
     } catch (err) {
       const msg = err?.message || 'Admin authentication failed. Please check your credentials.';
@@ -302,9 +316,15 @@ export default function LoginPage() {
     setIsSubmitting(true);
     try {
       const account = await login({ emailOrPhone: demo.email, password: 'password123', rememberMe, role: roleToUse });
-      toast.success(`Signed in as ${account.name}. Redirecting to ${account.dashboardPath}...`);
-      if (typeof window !== 'undefined' && account.dashboardPath) {
-        window.location.href = account.dashboardPath;
+      const targetDashboard =
+        roleToUse === 'ADMIN'
+          ? '/admin/dashboard'
+          : roleToUse === 'TECHNICIAN'
+          ? '/technician/dashboard'
+          : '/user/dashboard';
+      toast.success(`Signed in as ${account.name}. Redirecting to ${targetDashboard}...`);
+      if (typeof window !== 'undefined') {
+        window.location.href = targetDashboard;
       }
     } catch (err) {
       const msg = err?.message || 'Demo login error';
@@ -313,6 +333,7 @@ export default function LoginPage() {
       setIsSubmitting(false);
     }
   };
+
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row font-sans bg-[#f4f8f6]">

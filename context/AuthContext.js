@@ -57,13 +57,24 @@ function normalizeUser(u) {
   if (!u) return null;
   const emailPrefix = u.email ? u.email.split("@")[0] : "";
   const derivedUsername = (u.username || emailPrefix).toLowerCase().replace(/[^a-z0-9_]/g, "");
+  const role = String(u.role || "USER").toUpperCase();
+  const dashboardPath =
+    role === "ADMIN"
+      ? "/admin/dashboard"
+      : role === "TECHNICIAN"
+      ? "/technician/dashboard"
+      : "/user/dashboard";
+
   return {
     ...u,
+    role,
+    dashboardPath,
     displayName: u.displayName || u.name || emailPrefix || "User",
     username: derivedUsername,
     avatar: u.avatar || u.picture || "",
   };
 }
+
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
