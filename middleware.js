@@ -80,13 +80,22 @@ export function middleware(request) {
     return NextResponse.next();
   }
 
-  // 2. Resolve User Session from Cookies
+  // 2. Resolve User Session from Cookies or Query Params (from OAuth Redirect)
   const authUserCookie = request.cookies.get("phidim_auth_user")?.value || null;
   const tokenCookie = request.cookies.get("phidim_access_token")?.value || null;
+
+  const urlAuthToken = request.nextUrl.searchParams.get("auth_token");
+  const urlUserParam = request.nextUrl.searchParams.get("user");
 
   let sessionUser = parseUserFromCookie(authUserCookie);
   if (!sessionUser && tokenCookie) {
     sessionUser = parseUserFromJwt(tokenCookie);
+  }
+  if (!sessionUser && urlUserParam) {
+    sessionUser = parseUserFromCookie(urlUserParam);
+  }
+  if (!sessionUser && urlAuthToken) {
+    sessionUser = parseUserFromJwt(urlAuthToken);
   }
 
   const role = sessionUser?.role ? String(sessionUser.role).toUpperCase() : null;
@@ -98,7 +107,7 @@ export function middleware(request) {
       : "/user/dashboard";
 
   // 3. Logged-in users visiting auth pages get redirected to their dashboard
-  if (sessionUser && ["/forgot-password", "/reset-password"].includes(pathname)) {
+  if (sessionUser && ["/login", "/register", "/forgot-password", "/reset-password"].includes(pathname)) {
     if (pathname !== ownDashboard) {
       return NextResponse.redirect(new URL(ownDashboard, request.url));
     }
@@ -109,7 +118,7 @@ export function middleware(request) {
     return NextResponse.next();
   }
 
-  // 5. API routes: allow all to reach their route handler (authoritative DB checks happen inside handlers)
+  // 5. API routes: allow all to reach their route handler
   if (pathname.startsWith("/api/")) {
     return NextResponse.next();
   }
@@ -136,6 +145,7 @@ export function middleware(request) {
       loginUrl.searchParams.set("callbackUrl", pathname);
       return NextResponse.redirect(loginUrl);
     }
+
 
     // Role boundary checks (Admins can access user routes for testing/supervision)
     if (isUserRoute && role !== "USER" && role !== "ADMIN") {
