@@ -200,8 +200,8 @@ export function HomepageCommentSection() {
   // Add Comment input toggle state
   const [isAddingComment, setIsAddingComment] = useState(false);
 
-  // Pagination state for comments: Initially 5 comments visible by default, loads 5 more on each "Read more" click
-  const [visibleCount, setVisibleCount] = useState(5);
+  // Pagination state for comments: Initially 1 comment visible by default, loads 2 more on each "Read more" click
+  const [visibleCount, setVisibleCount] = useState(1);
 
   // Active reply state: { parentCommentId: string | null }
   const [activeReplyId, setActiveReplyId] = useState(null);
@@ -487,7 +487,7 @@ export function HomepageCommentSection() {
   };
 
   const handleReadMore = () => {
-    setVisibleCount((prev) => prev + 5);
+    setVisibleCount((prev) => prev + 2);
   };
 
   const handleShowLess = () => {

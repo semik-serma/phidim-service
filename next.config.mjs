@@ -1,6 +1,6 @@
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL ||
-  "https://phidim.phidimservice.com.np";
+  "https://service.phidimservice.com.np";
 
 
 const nextConfig = {

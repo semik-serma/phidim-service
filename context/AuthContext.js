@@ -265,7 +265,7 @@ export function AuthProvider({ children }) {
         const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "215712539422-43m80t4b9943vo3s8nhqnqr9b7foh76g.apps.googleusercontent.com";
         const redirectUri = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
           ? "http://localhost:3000/api/auth/google/callback"
-          : "https://phidim.phidimservice.com.np/api/auth/google/callback";
+          : "https://service.phidimservice.com.np/api/auth/google/callback";
 
         const nonce = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
         const statePayload = { role: targetRole, redirectUri, nonce, origin };

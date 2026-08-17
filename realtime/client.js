@@ -7,7 +7,7 @@ let socket = null;
 const DEFAULT_SOCKET_URL =
   process.env.NEXT_PUBLIC_SOCKET_URL ||
   process.env.NEXT_PUBLIC_BACKEND_URL ||
-  "https://phidim.phidimservice.com.np";
+  "https://service.phidimservice.com.np";
 
 export function getSocket() {
   if (typeof window === "undefined") return null;
