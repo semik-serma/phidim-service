@@ -207,19 +207,46 @@ export function HomepageCommentSection() {
   const [activeReplyId, setActiveReplyId] = useState(null);
   const [replyInputText, setReplyInputText] = useState("");
 
-  // Restore saved comments & reactions
+  // Restore saved comments & reactions from server database with localStorage fallback
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem("phidim_homepage_comments_v7");
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          if (parsed[0]?.author) {
-            parsed[0].author.avatarUrl = "/dhanraj.png";
+    async function loadServerComments() {
+      try {
+        const res = await fetch("/api/homepage/get-comments");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && Array.isArray(data.comments) && data.comments.length > 0) {
+            if (data.comments[0]?.author) {
+              data.comments[0].author.avatarUrl = "/dhanraj.png";
+            }
+            setComments(data.comments);
+            try {
+              localStorage.setItem("phidim_homepage_comments_v7", JSON.stringify(data.comments));
+            } catch (e) {}
+            return;
           }
-          setComments(parsed);
         }
+      } catch (e) { }
+
+      // Offline / fallback to localStorage
+      try {
+        const stored = localStorage.getItem("phidim_homepage_comments_v7");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            if (parsed[0]?.author) {
+              parsed[0].author.avatarUrl = "/dhanraj.png";
+            }
+            setComments(parsed);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load stored comments", e);
       }
+    }
+
+    loadServerComments();
+
+    try {
       const storedReactions = localStorage.getItem("phidim_homepage_comment_reactions");
       if (storedReactions) {
         setReactions(JSON.parse(storedReactions));
@@ -235,9 +262,7 @@ export function HomepageCommentSection() {
           triggerToast("Welcome back! Your comment draft is ready to submit. ✨");
         }
       }
-    } catch (e) {
-      console.error("Failed to load stored comments", e);
-    }
+    } catch (e) { }
   }, [isAuthenticated]);
 
   const saveComments = (updated) => {
@@ -263,6 +288,13 @@ export function HomepageCommentSection() {
     if (!isAuthenticated) {
       setShowLoginPrompt(true);
     }
+  };
+
+  const triggerToast = (msg) => {
+    setShowToast(msg);
+    setTimeout(() => {
+      setShowToast("");
+    }, 4000);
   };
 
   const redirectToLogin = () => {
@@ -315,6 +347,15 @@ export function HomepageCommentSection() {
     setNewCommentText("");
     setShowComments(true);
 
+    // Save to permanent backend server database API
+    fetch("/api/homepage/post-comment", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ comment: newCmt }),
+    }).catch((err) => {
+      console.error("Failed to sync comment to backend database:", err);
+    });
+
     const updatedReactions = { ...reactions, [newCmt.id]: "like" };
     setReactions(updatedReactions);
     try {
@@ -365,6 +406,19 @@ export function HomepageCommentSection() {
     saveComments(updatedComments);
     setReplyInputText("");
     setActiveReplyId(null);
+
+    // Sync updated comment with reply to backend database
+    const parent = updatedComments.find((c) => c.id === parentCommentId);
+    if (parent) {
+      fetch("/api/homepage/post-comment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ comment: parent }),
+      }).catch((err) => {
+        console.error("Failed to sync reply to backend database:", err);
+      });
+    }
+
     triggerToast("Your reply has been posted! 💬");
   };
 
